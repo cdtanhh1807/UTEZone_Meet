@@ -34,6 +34,19 @@ const whiteboardCont = document.querySelector('.whiteboard-cont');
 const canvas = document.querySelector("#whiteboard");
 const ctx = canvas.getContext('2d');
 
+
+//===============================Direc bên chatroom
+let channelId = new URLSearchParams(location.search).get("channel");
+let chatroomId = new URLSearchParams(location.search).get("chatroom");
+
+// Nếu URL thiếu, lấy từ sessionStorage (đã lưu từ channel.js)
+if (!channelId) channelId = sessionStorage.getItem('lastVoiceChannel');
+if (!chatroomId) chatroomId = sessionStorage.getItem('lastVoiceRoom');
+
+console.log('[room.js] Redirect params:', { channelId, chatroomId });
+//===============================
+
+
 let micAllowed = 1;
 let camAllowed = 1;
 let videoAllowed = 1;
@@ -174,7 +187,7 @@ function initWebSocket() {
 
     ws.onclose = () => {
         console.log('Disconnected');
-        location.href = '/';
+        // location.href = '/';
     };
 
     ws.onerror = (error) => {
@@ -240,7 +253,14 @@ function initWebSocket() {
                 break;
             case 'room_ended':
                 alert(`Host đã kết thúc cuộc họp.\nĐã xóa ${data.deleted_files || 0} file.`);
-                location.href = '/';
+                // location.href = '/';
+                const savedChannel = sessionStorage.getItem('lastVoiceChannel');
+                const savedChatroom = sessionStorage.getItem('lastVoiceRoom');
+                if (savedChannel && savedChatroom) {
+                    location.href = `/channel.html?channel=${savedChannel}&chatroom=${savedChatroom}&return=1`;
+                } else {
+                    location.href = '/';
+                }
                 break;
             case 'error':
                 alert(data.message);
@@ -1073,11 +1093,11 @@ function handleJoinedRoom(data) {
     isHost = data.is_host;
     roomType = data.room_type || 'instant';
 
-    const hostIcon = isHost ? '👑 ' : '';
+    const hostIcon = isHost ? '🔑 ' : '';
     document.querySelector("#myname").innerHTML = `${hostIcon}${displayName} (Bạn)`;
 
     if (isHost) {
-        cutCall.innerHTML = '<i class="fas fa-phone-slash"></i><span class="tooltiptext">End Meeting</span>';
+        cutCall.innerHTML = '<i class="fas fa-phone-slash"></i><span class="tooltiptext">Kết thúc</span>';
     }
 
     if (data.scheduled_at && !isHost) {
@@ -1121,7 +1141,7 @@ function handleJoinedRoom(data) {
     if (participantCount > 0) {
         chatRoom.innerHTML += `
             <div class="message system" style="text-align:center;color:#4caf50;font-style:italic;margin:10px 0;">
-                <small>🎉 Đã tham gia cuộc họp cùng ${participantCount} người khác</small>
+                <small>Đã tham gia cuộc họp cùng ${participantCount} người khác</small>
             </div>
         `;
     }
@@ -1146,7 +1166,7 @@ function handleUserJoined(data) {
 
     chatRoom.innerHTML += `
         <div class="message system" style="text-align:center;color:#666;font-style:italic;">
-            <small>✨ ${displayText} đã tham gia (${currentCount + 1} người đang online)</small>
+            <small>${displayText} đã tham gia (${currentCount + 1} người đang online)</small>
         </div>
     `;
     chatRoom.scrollTop = chatRoom.scrollHeight;
@@ -1214,6 +1234,20 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         myCameraStream = stream.clone();
         myvideo.srcObject = stream;
         myvideo.muted = true;
+
+        // Tắt mic và camera mặc định
+        mystream.getAudioTracks().forEach(track => track.enabled = false);
+        mystream.getVideoTracks().forEach(track => track.enabled = false);
+        audioAllowed = 0;
+        videoAllowed = 0;
+        // Cập nhật icon
+        audioButt.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+        audioButt.style.backgroundColor = "#b12c2c";
+        videoButt.innerHTML = '<i class="fas fa-video-slash"></i>';
+        videoButt.style.backgroundColor = "#b12c2c";
+        document.querySelector("#mymuteicon").style.visibility = 'visible';
+        document.querySelector("#myvideooff").style.visibility = 'visible';
+
         getUserInfo();
     })
     .catch(err => {
@@ -1610,7 +1644,7 @@ function setEraser() {
 }
 
 function clearBoard() {
-    if (window.confirm('Clear board?')) {
+    if (window.confirm('Xóa bảng?')) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ws.send(JSON.stringify({ type: 'whiteboard_clear' }));
     }
@@ -1665,15 +1699,29 @@ setInterval(() => {
 
 // =================== END CALL ===================
 
+// cutCall.addEventListener('click', () => {
+//     if (isHost && confirm('Bạn có chắc muốn kết thúc cuộc họp cho tất cả? Mọi file sẽ bị xóa.')) {
+//         ws.send(JSON.stringify({ type: 'end_room' }));
+//     } else if (!isHost) {
+//         ws.close();
+//         location.href = '/';
+//     }
+// });
+
+// window.addEventListener('beforeunload', () => {
+//     if (ws && ws.readyState === WebSocket.OPEN) ws.close();
+// });
 cutCall.addEventListener('click', () => {
     if (isHost && confirm('Bạn có chắc muốn kết thúc cuộc họp cho tất cả? Mọi file sẽ bị xóa.')) {
         ws.send(JSON.stringify({ type: 'end_room' }));
     } else if (!isHost) {
+        const savedChannel = sessionStorage.getItem('lastVoiceChannel');
+        const savedChatroom = sessionStorage.getItem('lastVoiceRoom');
+        if (savedChannel && savedChatroom) {
+            location.href = `/channel.html?channel=${savedChannel}&chatroom=${savedChatroom}&return=1`;
+        } else {
+            location.href = '/';
+        }
         ws.close();
-        location.href = '/';
     }
-});
-
-window.addEventListener('beforeunload', () => {
-    if (ws && ws.readyState === WebSocket.OPEN) ws.close();
 });

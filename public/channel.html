@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>UTEZone - Kênh</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/channel.css">
+    <script src="https://kit.fontawesome.com/6510466b6c.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="channel-loading" id="channel-loading">
+        <div class="channel-loading-spinner"></div>
+        <div class="channel-loading-text">Đang tải kênh...</div>
+    </div>
+    <div class="channel-app" id="channel-app" style="display:none;">
+        <div class="channel-sidebar" id="channel-sidebar">
+            <div class="sidebar-header">
+                <a href="#" onclick="goBack(); return false;"
+                    style="color:#72767d;font-size:16px;text-decoration:none;margin-right:8px;" title="Quay lại"><i
+                        class="fas fa-arrow-left"></i></a>
+                <h3>Kênh của tôi</h3>
+                <button class="btn-icon" id="btn-create-channel" title="Tạo kênh mới"><i
+                        class="fas fa-plus"></i></button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="search-channel" placeholder="Tìm kênh..." />
+            </div>
+            <div class="sidebar-join">
+                <button class="btn-join-channel" id="btn-join-channel"><i class="fas fa-sign-in-alt"></i> Tham gia
+                    kênh</button>
+            </div>
+            <div class="sidebar-list" id="channel-list"></div>
+        </div>
+        <div class="channel-main" id="channel-main">
+            <div class="channel-empty" id="channel-empty">
+                <i class="fas fa-comments" style="font-size:64px;color:#ccc;"></i>
+                <h2>Chào mừng đến UTEZone Channel</h2>
+                <p>Chọn một kênh từ danh sách bên trái hoặc tạo kênh mới</p>
+            </div>
+            <div class="channel-detail" id="channel-detail" style="display:none;">
+                <div class="detail-header">
+                    <div class="detail-header-left">
+                        <div class="channel-avatar" id="channel-avatar"><i class="fas fa-hashtag"></i></div>
+                        <div class="channel-info">
+                            <h2 id="channel-name">Tên kênh</h2>
+                            <p id="channel-description">Mô tả</p>
+                        </div>
+                    </div>
+                    <div class="detail-header-right">
+                        <span class="member-count" id="member-count"><i class="fas fa-users"></i> <span>0</span></span>
+                        <button class="btn-icon" id="btn-invite-code" title="Mã mời"><i
+                                class="fas fa-user-plus"></i></button>
+                        <button class="btn-icon" id="btn-channel-settings" title="Cài đặt"><i
+                                class="fas fa-cog"></i></button>
+                        <button class="btn-icon btn-danger" id="btn-leave-channel" title="Rời kênh"><i
+                                class="fas fa-sign-out-alt"></i></button>
+                    </div>
+                </div>
+                <div class="detail-body">
+                    <div class="chatrooms-panel" id="chatrooms-panel">
+                        <div class="panel-header">
+                            <h4><i class="fas fa-layer-group"></i> Các Phòng</h4>
+                            <button class="btn-icon btn-sm" id="btn-create-chatroom" title="Tạo phòng"><i
+                                    class="fas fa-plus"></i></button>
+                        </div>
+                        <div class="chatroom-list" id="chatroom-list"></div>
+                    </div>
+                    <div class="chatroom-content" id="chatroom-content">
+                        <div class="chatroom-empty" id="chatroom-empty-inner">
+                            <i class="fas fa-comment-dots" style="font-size:48px;color:#ccc;"></i>
+                            <p>Chọn phòng để bắt đầu</p>
+                        </div>
+                        <div class="chatroom-active" id="chatroom-active" style="display:none;">
+                            <div class="chatroom-header">
+                                <div class="chatroom-header-info">
+                                    <span id="chatroom-type-icon"><i class="fas fa-hashtag"></i></span>
+                                    <h3 id="chatroom-name">Tên phòng</h3>
+                                    <span class="chatroom-desc" id="chatroom-desc"></span>
+                                </div>
+                                <div class="chatroom-header-actions">
+                                    <button class="btn-icon" id="btn-media-gallery" title="Ảnh & Video"><i
+                                            class="fas fa-images"></i></button>
+                                    <button class="btn-icon" id="btn-files-list" title="Tài liệu"><i
+                                            class="fas fa-file-alt"></i></button>
+                                    <button class="btn-icon" id="btn-search-messages" title="Tìm kiếm"><i
+                                            class="fas fa-search"></i></button>
+                                    <button class="btn-start-meeting" id="btn-start-meeting"><i
+                                            class="fas fa-video"></i> Bắt đầu họp</button>
+                                    <button class="btn-icon" id="btn-chatroom-settings" title="Cài đặt phòng"><i
+                                            class="fas fa-cog"></i></button>
+                                </div>
+                            </div>
+                            <div class="chatroom-messages" id="chatroom-messages">
+                                <div class="chat-welcome">
+                                    <i class="fas fa-hashtag" style="font-size:40px;color:#323cae;"></i>
+                                    <h3>Chào mừng đến <span id="welcome-room-name"></span></h3>
+                                </div>
+                            </div>
+                            <div class="chatroom-input-area">
+                                <button class="btn-attach" id="btn-attach-file" title="Đính kèm file">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="file" id="file-input" style="display: none;" />
+                                <input type="text" id="chat-message-input" placeholder="Nhập tin nhắn..." />
+                                <button class="btn-send" id="btn-send-message"><i
+                                        class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="members-panel" id="members-panel">
+                        <div class="panel-header">
+                            <h4><i class="fas fa-users"></i> Thành viên</h4>
+                        </div>
+                        <div class="members-section" id="members-online-section">
+                            <h5>Đang hoạt động</h5>
+                            <div id="online-members-list"></div>
+                        </div>
+                        <div class="members-section" id="members-offline-section">
+                            <h5>Thành viên</h5>
+                            <div id="offline-members-list"></div>
+                        </div>
+                        <div class="members-section" id="members-pending" style="display:none;">
+                            <h5>Chờ phê duyệt</h5>
+                            <div id="pending-members-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-create-channel" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tạo kênh mới</h3><button class="btn-icon modal-close" data-modal="modal-create-channel"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Tên kênh <span class="required">*</span></label><input type="text"
+                        id="input-channel-name" placeholder="Nhập tên kênh..." /></div>
+                <div class="form-group"><label>Mô tả</label><textarea id="input-channel-desc"
+                        placeholder="Mô tả kênh (tùy chọn)..." rows="3"></textarea></div>
+                <div class="form-group"><label class="checkbox-label"><input type="checkbox"
+                            id="input-require-approval" /> Yêu cầu phê duyệt khi tham gia</label></div>
+            </div>
+            <div class="modal-footer"><button class="btn-secondary modal-close"
+                    data-modal="modal-create-channel">Hủy</button><button class="btn-primary"
+                    id="btn-submit-create-channel">Tạo kênh</button></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-join-channel" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tham gia kênh</h3><button class="btn-icon modal-close" data-modal="modal-join-channel"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Mã mời</label><input type="text" id="input-invite-code"
+                        placeholder="Nhập mã mời..." /></div>
+            </div>
+            <div class="modal-footer"><button class="btn-secondary modal-close"
+                    data-modal="modal-join-channel">Hủy</button><button class="btn-primary"
+                    id="btn-submit-join-channel">Tham gia</button></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-create-chatroom" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tạo phòng chat</h3><button class="btn-icon modal-close" data-modal="modal-create-chatroom"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Tên phòng <span class="required">*</span></label><input type="text"
+                        id="input-chatroom-name" placeholder="Nhập tên phòng..." /></div>
+                <div class="form-group"><label>Mô tả</label><input type="text" id="input-chatroom-desc"
+                        placeholder="Mô tả phòng (tùy chọn)..." /></div>
+                <div class="form-group"><label>Loại phòng</label>
+                    <div class="radio-group"><label class="radio-label"><input type="radio" name="chatroom-type"
+                                value="text" checked /> <i class="fas fa-hashtag"></i> Trò chuyện</label><label
+                            class="radio-label"><input type="radio" name="chatroom-type" value="voice" /> <i
+                                class="fas fa-volume-up"></i> Họp</label></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn-secondary modal-close"
+                    data-modal="modal-create-chatroom">Hủy</button><button class="btn-primary"
+                    id="btn-submit-create-chatroom">Tạo phòng</button></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-channel-settings" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Cài đặt kênh</h3>
+                <button class="btn-icon modal-close" data-modal="modal-channel-settings"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Ảnh đại diện kênh</label>
+                    <div class="channel-avatar-upload">
+                        <div id="channel-avatar-preview-container">
+                            <img id="channel-avatar-preview" class="channel-avatar-preview" src=""
+                                style="display:none;">
+                            <div id="channel-avatar-placeholder" class="channel-avatar-placeholder">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                        </div>
+                        <div class="channel-avatar-buttons">
+                            <button type="button" class="btn-secondary" id="btn-upload-avatar">Tải ảnh lên</button>
+                            <button type="button" class="btn-danger" id="btn-remove-avatar">Xóa ảnh</button>
+                        </div>
+                        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tên kênh</label>
+                    <input type="text" id="input-edit-channel-name" />
+                </div>
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea id="input-edit-channel-desc" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="input-edit-require-approval" /> Yêu cầu phê duyệt
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Mã mời</label>
+                    <div class="invite-code-display">
+                        <span id="display-invite-code">-</span>
+                        <button class="btn-icon" id="btn-copy-invite-code" title="Sao chép"><i
+                                class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <!-- Đã xóa thẻ <hr> -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary modal-close" data-modal="modal-channel-settings">Hủy</button>
+                <button class="btn-danger" id="btn-delete-channel"><i class="fas fa-trash"></i> Xóa kênh</button>
+                <button class="btn-primary" id="btn-submit-edit-channel">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-chatroom-settings" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Cài đặt phòng</h3>
+                <button class="btn-icon modal-close" data-modal="modal-chatroom-settings">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Tên phòng</label>
+                    <input type="text" id="input-edit-chatroom-name" />
+                </div>
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <input type="text" id="input-edit-chatroom-desc" />
+                </div>
+                <!-- Không có <hr> -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary modal-close" data-modal="modal-chatroom-settings">Hủy</button>
+                <button class="btn-danger" id="btn-delete-chatroom">
+                    <i class="fas fa-trash"></i> Xóa phòng
+                </button>
+                <button class="btn-primary" id="btn-submit-edit-chatroom">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-media-files" style="display:none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3 id="modal-media-title">Ảnh & Video</h3>
+                <button class="btn-icon modal-close" data-modal="modal-media-files"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="modal-media-content">
+                <!-- Nội dung load bằng JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal tìm kiếm tin nhắn -->
+    <div class="modal-overlay" id="modal-search" style="display:none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3>Tìm kiếm tin nhắn</h3>
+                <button class="btn-icon modal-close" data-modal="modal-search"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="display:flex; gap:8px;">
+                    <input type="text" id="search-input" placeholder="Nhập từ khóa..." style="flex:1;">
+                    <button id="btn-do-search" class="btn-primary">Tìm</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/channel.js"></script>
+</body>
+
+</html>

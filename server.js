@@ -10,6 +10,9 @@ const server = http.createServer(app);
 
 const io = socketio(server);
 
+app.get('/', (req, res) => {
+    res.redirect('/channel.html');
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
