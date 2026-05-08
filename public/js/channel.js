@@ -114,32 +114,79 @@ async function getUserAvatar(email) {
     }
 }
 
+let channelAvatarCache = {}; // { file_id: url }
+
+async function getChannelAvatarUrl(fileId) {
+    if (!fileId) return null;
+    if (channelAvatarCache[fileId]) return channelAvatarCache[fileId];
+    try {
+        const data = await apiCall(`/channels/files/${fileId}`);
+        channelAvatarCache[fileId] = data.url;
+        return data.url;
+    } catch (err) {
+        console.error('Failed to get channel avatar URL:', err);
+        return null;
+    }
+}
 
 // Cập nhật avatar ở header channel detail
-function updateChannelAvatarInUI() {
+// function updateChannelAvatarInUI() {
+//     const avatarContainer = document.getElementById('channel-avatar');
+//     if (avatarContainer) {
+//         if (currentChannel && currentChannel.avatar) {
+//             avatarContainer.innerHTML = `<img src="${currentChannel.avatar}" class="channel-avatar-img" style="width:40px;height:40px;">`;
+//         } else {
+//             avatarContainer.innerHTML = '<i class="fas fa-hashtag"></i>';
+//         }
+//     }
+// }
+async function updateChannelAvatarInUI() {
     const avatarContainer = document.getElementById('channel-avatar');
-    if (avatarContainer) {
-        if (currentChannel && currentChannel.avatar) {
-            avatarContainer.innerHTML = `<img src="${currentChannel.avatar}" class="channel-avatar-img" style="width:40px;height:40px;">`;
+    if (!avatarContainer) return;
+    if (currentChannel && currentChannel.avatar) {
+        let url = await getChannelAvatarUrl(currentChannel.avatar);
+        if (url) {
+            avatarContainer.innerHTML = `<img src="${url}" class="channel-avatar-img" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`;
         } else {
             avatarContainer.innerHTML = '<i class="fas fa-hashtag"></i>';
         }
+    } else {
+        avatarContainer.innerHTML = '<i class="fas fa-hashtag"></i>';
     }
 }
 
 // Hiển thị preview trong modal settings
-function loadChannelAvatarPreview() {
+// function loadChannelAvatarPreview() {
+//     const img = document.getElementById('channel-avatar-preview');
+//     const placeholder = document.getElementById('channel-avatar-placeholder');
+//     if (!currentChannel || !currentChannel.avatar) {
+//         img.style.display = 'none';
+//         placeholder.style.display = 'flex';
+//     } else {
+//         img.src = currentChannel.avatar;
+//         img.style.display = 'block';
+//         placeholder.style.display = 'none';
+//     }
+// }
+async function loadChannelAvatarPreview() {
     const img = document.getElementById('channel-avatar-preview');
     const placeholder = document.getElementById('channel-avatar-placeholder');
     if (!currentChannel || !currentChannel.avatar) {
         img.style.display = 'none';
         placeholder.style.display = 'flex';
     } else {
-        img.src = currentChannel.avatar;
-        img.style.display = 'block';
-        placeholder.style.display = 'none';
+        let url = await getChannelAvatarUrl(currentChannel.avatar);
+        if (url) {
+            img.src = url;
+            img.style.display = 'block';
+            placeholder.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            placeholder.style.display = 'flex';
+        }
     }
 }
+
 document.getElementById('btn-upload-avatar')?.addEventListener('click', () => {
     document.getElementById('avatar-file-input').click();
 });
@@ -157,18 +204,48 @@ document.getElementById('avatar-file-input')?.addEventListener('change', async (
         });
         if (!response.ok) throw new Error('Upload failed');
         const data = await response.json();
-        currentChannel.avatar = data.avatar_url;
-        loadChannelAvatarPreview();
-        updateChannelAvatarInUI();
-        // Cập nhật avatar trong channel list (sidebar)
-        renderChannelList();
-        showToast('Cập nhật ảnh đại diện thành công', 'success');
+        currentChannel.avatar = data.file_id;
+        if (data.file_id) {
+            // Không cần xóa cache vì file_id mới chưa có trong cache
+            // Nhưng nếu trước đó có avatar cũ, xóa cache cũ
+            if (currentChannel.avatar && currentChannel.avatar !== data.file_id) {
+                delete channelAvatarCache[currentChannel.avatar];
+            }
+            // Load lại avatar preview (sẽ gọi getChannelAvatarUrl)
+            await loadChannelAvatarPreview();
+            await updateChannelAvatarInUI();
+            renderChannelList();
+            showToast('Cập nhật ảnh đại diện thành công', 'success');
+        }
+        // currentChannel.avatar = data.avatar_url;
+        // loadChannelAvatarPreview();
+        // updateChannelAvatarInUI();
+        // renderChannelList();
+        // showToast('Cập nhật ảnh đại diện thành công', 'success');
     } catch (err) {
         showToast('Lỗi upload: ' + err.message, 'error');
     }
 });
 
 // Xóa avatar
+// document.getElementById('btn-remove-avatar')?.addEventListener('click', async () => {
+//     if (!confirm('Bạn có chắc muốn xóa ảnh đại diện?')) return;
+//     try {
+//         const token = getToken();
+//         const response = await fetch(`${API_URL}/channels/${currentChannel.channel_id}/avatar`, {
+//             method: 'DELETE',
+//             headers: { 'Authorization': `Bearer ${token}` }
+//         });
+//         if (!response.ok) throw new Error('Delete failed');
+//         currentChannel.avatar = null;
+//         loadChannelAvatarPreview();
+//         updateChannelAvatarInUI();
+//         renderChannelList();
+//         showToast('Đã xóa ảnh đại diện', 'success');
+//     } catch (err) {
+//         showToast('Lỗi xóa ảnh: ' + err.message, 'error');
+//     }
+// });
 document.getElementById('btn-remove-avatar')?.addEventListener('click', async () => {
     if (!confirm('Bạn có chắc muốn xóa ảnh đại diện?')) return;
     try {
@@ -178,6 +255,8 @@ document.getElementById('btn-remove-avatar')?.addEventListener('click', async ()
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Delete failed');
+        // Xóa cache cũ
+        if (currentChannel.avatar) delete channelAvatarCache[currentChannel.avatar];
         currentChannel.avatar = null;
         loadChannelAvatarPreview();
         updateChannelAvatarInUI();
@@ -320,8 +399,23 @@ function connectChannelWebsocket(channelId) {
                     }
                     break;
                 case 'channel_avatar_updated':
+                    // if (currentChannel && currentChannel.channel_id === data.channel_id) {
+                    //     currentChannel.avatar = data.avatar_url;
+                    //     updateChannelAvatarInUI();
+                    //     loadChannelAvatarPreview(); // nếu modal đang mở
+                    //     renderChannelList(); // cập nhật sidebar
+                    // }
+                    // break;
                     if (currentChannel && currentChannel.channel_id === data.channel_id) {
-                        currentChannel.avatar = data.avatar_url;
+                        const oldFileId = currentChannel.avatar;
+                        currentChannel.avatar = data.file_id;
+                        if (oldFileId && oldFileId !== data.file_id) {
+                            delete channelAvatarCache[oldFileId];
+                        }
+                        if (data.file_id) {
+                            // Xóa cache cũ cho file_id mới (nếu có) để load lại URL
+                            delete channelAvatarCache[data.file_id];
+                        }
                         updateChannelAvatarInUI();
                         loadChannelAvatarPreview(); // nếu modal đang mở
                         renderChannelList(); // cập nhật sidebar
@@ -365,6 +459,30 @@ function loadChannels() {
     });
 }
 
+// function renderChannelList() {
+//     var container = document.getElementById('channel-list');
+//     var searchTerm = document.getElementById('search-channel').value.toLowerCase();
+//     var filtered = channelList.filter(function (ch) {
+//         return ch.name.toLowerCase().indexOf(searchTerm) !== -1;
+//     });
+//     var html = '';
+//     filtered.forEach(function (ch) {
+//         var isActive = currentChannel && currentChannel.channel_id === ch.channel_id ? ' active' : '';
+//         var avatarHtml = ch.avatar
+//             ? `<img src="${ch.avatar}" class="channel-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
+//             : '<i class="fas fa-hashtag"></i>';
+//         var unread = unreadChannelCounts[ch.channel_id] || 0;
+//         var unreadBadge = unread > 0 ? '<span class="unread-badge"></span>' : '';
+//         var channelNameClass = unread > 0 ? 'channel-item-name unread' : 'channel-item-name';
+//         html += '<div class="channel-item' + isActive + '" data-id="' + ch.channel_id + '" onclick="selectChannel(\'' + ch.channel_id + '\')">' +
+//             '<div class="channel-item-avatar">' + avatarHtml + '</div>' +
+//             '<div class="channel-item-info">' +
+//             '<div class="' + channelNameClass + '">' + escapeHtml(ch.name) + unreadBadge + '</div>' +
+//             '<div class="channel-item-desc">' + escapeHtml(ch.description || '') + '</div>' +
+//             '</div></div>';
+//     });
+//     container.innerHTML = html;
+// }
 function renderChannelList() {
     var container = document.getElementById('channel-list');
     var searchTerm = document.getElementById('search-channel').value.toLowerCase();
@@ -374,9 +492,26 @@ function renderChannelList() {
     var html = '';
     filtered.forEach(function (ch) {
         var isActive = currentChannel && currentChannel.channel_id === ch.channel_id ? ' active' : '';
-        var avatarHtml = ch.avatar
-            ? `<img src="${ch.avatar}" class="channel-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
-            : '<i class="fas fa-hashtag"></i>';
+        var avatarHtml = '<i class="fas fa-hashtag"></i>';
+        if (ch.avatar) {
+            var cachedUrl = channelAvatarCache[ch.avatar];
+            if (cachedUrl) {
+                avatarHtml = `<img src="${cachedUrl}" class="channel-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`;
+            } else {
+                // Hiển thị icon loading và fetch bất đồng bộ
+                avatarHtml = '<i class="fas fa-spinner fa-spin"></i>';
+                getChannelAvatarUrl(ch.avatar).then(url => {
+                    if (url) {
+                        channelAvatarCache[ch.avatar] = url;
+                        renderChannelList(); // re-render để hiển thị ảnh
+                    } else {
+                        // Nếu lỗi, hiển thị icon mặc định và cập nhật cache là null để không thử lại
+                        channelAvatarCache[ch.avatar] = null;
+                        renderChannelList();
+                    }
+                });
+            }
+        }
         var unread = unreadChannelCounts[ch.channel_id] || 0;
         var unreadBadge = unread > 0 ? '<span class="unread-badge"></span>' : '';
         var channelNameClass = unread > 0 ? 'channel-item-name unread' : 'channel-item-name';
@@ -416,7 +551,7 @@ function updateOwnerControls() {
     }
 }
 
-function selectChannel(channelId) {
+async function selectChannel(channelId) {
     apiCall('/channels/' + channelId).then(async function (data) {
         currentChannel = data;
         currentChatroom = null;
@@ -437,7 +572,7 @@ function selectChannel(channelId) {
 
         connectChannelWebsocket(channelId);
 
-        renderChannelDetail();
+        await renderChannelDetail();
         renderChannelList();
         await loadChatrooms(channelId);
         await loadUnreadCounts(channelId);
@@ -461,24 +596,57 @@ function selectChannel(channelId) {
     });
 }
 
-function renderChannelDetail() {
+// async function renderChannelDetail() {
+//     document.getElementById('channel-empty').style.display = 'none';
+//     document.getElementById('channel-detail').style.display = 'flex';
+//     // Cập nhật avatar ở header
+//     const avatarContainer = document.getElementById('channel-avatar');
+//     if (avatarContainer) {
+//         if (currentChannel.avatar) {
+//             avatarContainer.innerHTML = `<img src="${currentChannel.avatar}" class="channel-avatar-img" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`;
+//         } else {
+//             avatarContainer.innerHTML = '<i class="fas fa-hashtag"></i>';
+//         }
+//     }
+//     document.getElementById('channel-name').textContent = currentChannel.name;
+//     document.getElementById('channel-description').textContent = currentChannel.description || 'Không có mô tả';
+//     var memberCount = currentChannel.member_count || (memberList ? memberList.length : 0);
+//     document.getElementById('member-count').innerHTML = '<i class="fas fa-users"></i> <span>' + memberCount + '</span>';
+
+//     var leaveBtn = document.getElementById('btn-leave-channel');
+//     if (currentChannel.is_owner) {
+//         leaveBtn.title = 'Xóa kênh';
+//         leaveBtn.innerHTML = '<i class="fas fa-trash"></i>';
+//     } else {
+//         leaveBtn.title = 'Rời kênh';
+//         leaveBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+//     }
+// }
+async function renderChannelDetail() {
     document.getElementById('channel-empty').style.display = 'none';
     document.getElementById('channel-detail').style.display = 'flex';
+
     // Cập nhật avatar ở header
     const avatarContainer = document.getElementById('channel-avatar');
     if (avatarContainer) {
         if (currentChannel.avatar) {
-            avatarContainer.innerHTML = `<img src="${currentChannel.avatar}" class="channel-avatar-img" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`;
+            const url = await getChannelAvatarUrl(currentChannel.avatar);
+            if (url) {
+                avatarContainer.innerHTML = `<img src="${url}" class="channel-avatar-img" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`;
+            } else {
+                avatarContainer.innerHTML = '<i class="fas fa-hashtag"></i>';
+            }
         } else {
             avatarContainer.innerHTML = '<i class="fas fa-hashtag"></i>';
         }
     }
+
     document.getElementById('channel-name').textContent = currentChannel.name;
     document.getElementById('channel-description').textContent = currentChannel.description || 'Không có mô tả';
-    var memberCount = currentChannel.member_count || (memberList ? memberList.length : 0);
+    const memberCount = currentChannel.member_count || (memberList ? memberList.length : 0);
     document.getElementById('member-count').innerHTML = '<i class="fas fa-users"></i> <span>' + memberCount + '</span>';
 
-    var leaveBtn = document.getElementById('btn-leave-channel');
+    const leaveBtn = document.getElementById('btn-leave-channel');
     if (currentChannel.is_owner) {
         leaveBtn.title = 'Xóa kênh';
         leaveBtn.innerHTML = '<i class="fas fa-trash"></i>';
@@ -1334,12 +1502,32 @@ document.getElementById('btn-channel-settings').addEventListener('click', functi
     document.getElementById('modal-channel-settings').style.display = 'flex';
 });
 
+// document.getElementById('btn-submit-edit-channel').addEventListener('click', function () {
+//     var name = document.getElementById('input-edit-channel-name').value.trim();
+//     var description = document.getElementById('input-edit-channel-desc').value.trim();
+//     var requireApproval = document.getElementById('input-edit-require-approval').checked;
+//     if (!name) { showToast('Vui lòng nhập tên kênh', 'error'); return; }
+//     apiCall('/channels/' + currentChannel.channel_id, 'PUT', { name: name, description: description, require_approval: requireApproval }).then(function () {
+//         showToast('Cập nhật kênh thành công!', 'success');
+//         document.getElementById('modal-channel-settings').style.display = 'none';
+//         selectChannel(currentChannel.channel_id);
+//         loadChannels();
+//     }).catch(function (err) {
+//         showToast('Lỗi cập nhật kênh: ' + err.message, 'error');
+//     });
+// });
 document.getElementById('btn-submit-edit-channel').addEventListener('click', function () {
     var name = document.getElementById('input-edit-channel-name').value.trim();
     var description = document.getElementById('input-edit-channel-desc').value.trim();
     var requireApproval = document.getElementById('input-edit-require-approval').checked;
     if (!name) { showToast('Vui lòng nhập tên kênh', 'error'); return; }
-    apiCall('/channels/' + currentChannel.channel_id, 'PUT', { name: name, description: description, require_approval: requireApproval }).then(function () {
+    var avatar = currentChannel.avatar || null;   // lấy avatar hiện tại (có thể null)
+    apiCall('/channels/' + currentChannel.channel_id, 'PUT', {
+        name: name,
+        description: description,
+        require_approval: requireApproval,
+        avatar: avatar   // thêm dòng này
+    }).then(function () {
         showToast('Cập nhật kênh thành công!', 'success');
         document.getElementById('modal-channel-settings').style.display = 'none';
         selectChannel(currentChannel.channel_id);
