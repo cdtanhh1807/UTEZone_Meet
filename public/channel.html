@@ -235,6 +235,48 @@
                                 class="fas fa-copy"></i></button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-moderation" /> Bật kiểm duyệt nội dung (AI)
+                    </label>
+                </div>
+                <div id="moderation-rules-container" style="display:none;">
+                    <div class="form-group">
+                        <label>Luật kiểm duyệt (mỗi dòng một quy tắc, bằng tiếng Việt)</label>
+                        <textarea id="moderation-rules-text" rows="4" placeholder="VD:
+- Không được chửi bậy, nói tục.
+- Cấm spam link quảng cáo.
+- Không được đăng ảnh bạo lực, khỏa thân.
+- ..."></textarea>
+                        <small class="text-muted">AI sẽ hiểu và áp dụng các quy tắc này.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Áp dụng kiểm duyệt cho:</label>
+                        <div style="display:flex; gap:16px;">
+                            <label><input type="checkbox" id="moderate-text" checked> Text</label>
+                            <label><input type="checkbox" id="moderate-image"> Ảnh</label>
+                            <label><input type="checkbox" id="moderate-video"> Video</label>
+                            <label><input type="checkbox" id="moderate-file"> File</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Hành động khi vi phạm:</label>
+                        <select id="moderation-action">
+                            <option value="warn">Cảnh báo</option>
+                            <option value="mute">Cấm chat</option>
+                            <option value="kick">Xóa khỏi kênh</option>
+                            <!-- <option value="ban">Ban (cấm vĩnh viễn)</option> -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Số lần vi phạm tối đa (trong 24h):</label>
+                        <input type="number" id="max-violations" value="3" min="1">
+                    </div>
+                    <div class="form-group" id="penalty-time-group" style="display:none;">
+                        <label>Thời gian mute (phút):</label>
+                        <input type="number" id="penalty-time" value="10" min="1">
+                    </div>
+                </div>
                 <!-- Đã xóa thẻ <hr> -->
             </div>
             <div class="modal-footer">

@@ -10,6 +10,56 @@ body {
     color: #1a1a2e;
 }
 
+.btn-reject {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-reject:hover {
+    background: #bb2d3b;
+}
+
+.pending-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.member-kick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: #e74c3c;
+    color: white;
+    cursor: pointer;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.member-kick-btn:hover {
+    background: #c0392b;
+}
+
+.member-item .member-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.member-item {
+    gap: 8px;
+}
 /* Toast */
 #toast-container {
     position: fixed;
@@ -1118,3 +1168,83 @@ input, textarea {
 .chatroom-item.active .chatroom-item-icon {
     color: #fff;
 }
+
+
+
+
+.rule-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.rule-item select, .rule-item input {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.rule-item .remove-rule {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #e74c3c;
+}
+
+
+
+
+
+
+#moderation-action,
+#max-violations,
+#penalty-time {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+#moderation-action:hover,
+#max-violations:hover,
+#penalty-time:hover {
+    border-color: #323cae;
+}
+#moderation-action:focus,
+#max-violations:focus,
+#penalty-time:focus {
+    border-color: #323cae;
+    box-shadow: 0 0 0 2px rgba(50,60,174,0.2);
+}
+
+/* Điều chỉnh chiều rộng cho các input number */
+#max-violations,
+#penalty-time {
+    width: 100px;
+}
+
+/* Cải thiện giao diện cho nhóm checkbox trong moderation */
+#moderation-rules-container .form-group div[style*="display:flex"] {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+#moderation-rules-container .form-group label {
+    font-weight: normal;
+    font-size: 13px;
+}
+
+/* Tùy chỉnh arrow cho select (tuỳ chọn) */
+#moderation-action {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
