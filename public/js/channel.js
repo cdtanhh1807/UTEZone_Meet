@@ -908,14 +908,40 @@ async function appendNewMessages(newMessages) {
             ? `data-temp-id="${msg.message_id}"`
             : '';
 
+        const canDeleteMessage =
+            currentChannel &&
+            currentChannel.is_owner &&
+            msg.message_id &&
+            !msg.message_id.startsWith('temp_');
+
+        const deleteButtonHtml = canDeleteMessage
+            ? `
+                <button 
+                    type="button"
+                    class="message-delete-btn"
+                    title="Xóa tin nhắn"
+                    onclick="event.stopPropagation(); deleteChatMessage('${String(msg.message_id).replace(/'/g, "\\'")}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `
+            : '';
+
         html += `
             <div class="message-item${isOwn ? ' own' : ''}" ${messageIdAttr} ${tempIdAttr}>
-                <div class="message-avatar">${avatarHtml}${letterHtml}</div>
+                <div 
+                    class="message-avatar clickable-avatar"
+                    title="Xem trang cá nhân"
+                    onclick="event.stopPropagation(); viewProfile('${String(msg.sender_email || '').replace(/'/g, "\\'")}')">
+                    ${avatarHtml}${letterHtml}
+                </div>
+
                 <div class="message-content">
                     <div class="message-header">
                         <span class="message-sender">${escapeHtml(msg.sender_name || msg.sender_email)}</span>
                         <span class="message-time">${formatTime(msg.created_at)}</span>
+                        ${deleteButtonHtml}
                     </div>
+
                     <div class="message-text">${contentHtml}</div>
                 </div>
             </div>
@@ -1074,14 +1100,40 @@ async function renderMessages() {
                 ? `data-temp-id="${msg.message_id}"`
                 : '';
 
+            const canDeleteMessage =
+                currentChannel &&
+                currentChannel.is_owner &&
+                msg.message_id &&
+                !msg.message_id.startsWith('temp_');
+
+            const deleteButtonHtml = canDeleteMessage
+                ? `
+                    <button 
+                        type="button"
+                        class="message-delete-btn"
+                        title="Xóa tin nhắn"
+                        onclick="event.stopPropagation(); deleteChatMessage('${String(msg.message_id).replace(/'/g, "\\'")}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `
+                : '';
+
             html += `
                 <div class="message-item${isOwn ? ' own' : ''}" ${messageIdAttr} ${tempIdAttr}>
-                    <div class="message-avatar">${avatarHtml}${letterHtml}</div>
+                    <div 
+                        class="message-avatar clickable-avatar"
+                        title="Xem trang cá nhân"
+                        onclick="event.stopPropagation(); viewProfile('${String(msg.sender_email || '').replace(/'/g, "\\'")}')">
+                        ${avatarHtml}${letterHtml}
+                    </div>
+
                     <div class="message-content">
                         <div class="message-header">
                             <span class="message-sender">${escapeHtml(msg.sender_name || msg.sender_email)}</span>
                             <span class="message-time">${formatTime(msg.created_at)}</span>
+                            ${deleteButtonHtml}
                         </div>
+
                         <div class="message-text">${contentHtml}</div>
                     </div>
                 </div>
@@ -1100,6 +1152,41 @@ async function renderMessages() {
             container.scrollTop = container.scrollHeight;
         }
     }, 0);
+}
+
+function deleteChatMessage(messageId) {
+    if (!currentChannel || !currentChannel.is_owner) {
+        showToast('Bạn không có quyền xóa tin nhắn', 'error');
+        return;
+    }
+
+    if (!messageId) {
+        showToast('Không tìm thấy ID tin nhắn', 'error');
+        return;
+    }
+
+    if (!confirm('Bạn có chắc muốn xóa tin nhắn này?')) {
+        return;
+    }
+
+    apiCall(`/channels/messages/${encodeURIComponent(messageId)}`, 'DELETE')
+        .then(() => {
+            showToast('Đã xóa tin nhắn', 'success');
+
+            // Xóa ngay trên UI của chủ channel, không cần chờ websocket
+            messageList = messageList.filter(m => m.message_id !== messageId);
+
+            const msgEl = document.querySelector(
+                `.message-item[data-message-id="${messageId}"]`
+            );
+
+            if (msgEl) {
+                msgEl.remove();
+            }
+        })
+        .catch(err => {
+            showToast('Lỗi xóa tin nhắn: ' + err.message, 'error');
+        });
 }
 
 async function refreshMessages() {

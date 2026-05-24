@@ -60,6 +60,40 @@ body {
 .member-item {
     gap: 8px;
 }
+
+.message-delete-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    margin-left: 8px;
+    background: transparent;
+    color: #999;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.message-item:hover .message-delete-btn {
+    display: inline-flex;
+}
+
+.message-delete-btn:hover {
+    background: rgba(231, 76, 60, 0.12);
+    color: #e74c3c;
+}
+
+.clickable-avatar {
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.clickable-avatar:hover {
+    transform: scale(1.06);
+    opacity: 0.85;
+}
 /* Toast */
 #toast-container {
     position: fixed;
@@ -1247,4 +1281,6 @@ input, textarea {
     background-position: right 12px center;
     padding-right: 32px;
 }
+
+
 
