@@ -22,32 +22,36 @@ async function getFileUrl(fileId) {
     }
 }
 
+
 function getToken() {
-    var token = localStorage.getItem('token');
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlToken = urlParams.get('token');
 
-    if (!token) {
-        var urlParams = new URLSearchParams(window.location.search);
-        token = urlParams.get('token');
+    // Nếu URL có token => luôn cập nhật token mới
+    if (urlToken) {
+        localStorage.setItem('token', urlToken);
 
-        if (token) {
-            localStorage.setItem('token', token);
+        urlParams.delete('token');
 
-            // Chỉ xóa token, giữ lại invite nếu có
-            urlParams.delete('token');
+        const newQuery = urlParams.toString();
+        const newUrl =
+            window.location.pathname +
+            (newQuery ? '?' + newQuery : '');
 
-            const newQuery = urlParams.toString();
-            const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
+        window.history.replaceState({}, document.title, newUrl);
 
-            window.history.replaceState({}, document.title, newUrl);
-
-            return token;
-        } else {
-            redirectToLogin();
-            return null;
-        }
+        return urlToken;
     }
 
-    return token;
+    // fallback localStorage
+    var localToken = localStorage.getItem('token');
+
+    if (!localToken) {
+        redirectToLogin();
+        return null;
+    }
+
+    return localToken;
 }
 
 function showToast(message, type) {
@@ -1744,20 +1748,40 @@ document.getElementById('btn-submit-create-channel').addEventListener('click', a
     var name = document.getElementById('input-channel-name').value.trim();
     var description = document.getElementById('input-channel-desc').value.trim();
     var requireApproval = document.getElementById('input-require-approval').checked;
-    if (!name) { showToast('Vui lòng nhập tên kênh', 'error'); return; }
+
+    if (!name) {
+        showToast('Vui lòng nhập tên kênh', 'error');
+        return;
+    }
+
     const submitBtn = document.getElementById('btn-submit-create-channel');
     const originalText = submitBtn.innerText;
-    submitBtn.disabled = true; submitBtn.innerText = 'Đang tạo...';
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Đang tạo...';
+
     try {
-        await apiCall('/channels/create', 'POST', { name, description, require_approval });
+        await apiCall('/channels/create', 'POST', {
+            name,
+            description,
+            require_approval: requireApproval
+        });
+
         showToast('Tạo kênh thành công!', 'success');
+
         document.getElementById('modal-create-channel').style.display = 'none';
         document.getElementById('input-channel-name').value = '';
         document.getElementById('input-channel-desc').value = '';
         document.getElementById('input-require-approval').checked = false;
+
         await loadChannels();
-    } catch (err) { console.error('Create channel error:', err); showToast('Lỗi tạo kênh: ' + err.message, 'error'); }
-    finally { submitBtn.disabled = false; submitBtn.innerText = originalText; }
+    } catch (err) {
+        console.error('Create channel error:', err);
+        showToast('Lỗi tạo kênh: ' + err.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+    }
 });
 document.getElementById('btn-join-channel').addEventListener('click', () => document.getElementById('modal-join-channel').style.display = 'flex');
 document.getElementById('btn-submit-join-channel').addEventListener('click', () => {
